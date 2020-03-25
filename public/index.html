@@ -39,5 +39,21 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+    <script src="https://www.gstatic.com/firebasejs/7.2.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.2.3/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-storage.js"></script>
+    <script>
+      var firebaseConfig = {
+      apiKey: 'AIzaSyApDvsaABr0pYkiLEVE98RFo58W8NXnGTI',
+      authDomain: 'editor-ff96e.firebaseapp.com',
+      projectId: "editor",
+      databaseURL: "https://editor.firebaseio.com",
+      storageBucket: 'gs://editor-ff96e.appspot.com'
+      };
+      firebase.initializeApp(firebaseConfig);
+
+    // Get a reference to the storage service, which is used to create references in your storage bucket
+      var storage = firebase.storage();
+    </script>
   </body>
 </html>
