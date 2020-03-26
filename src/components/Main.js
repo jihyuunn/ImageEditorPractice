@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useState, useRef, useEffect} from 'react'
 import styled from 'styled-components'
 
 const Main = () => {
@@ -6,12 +6,38 @@ const Main = () => {
     const allInputs = {imgUrl: ''}
     const [imageAsFile, setImageAsFile] = useState('')
     const [imageAsUrl, setImageAsUrl] = useState(allInputs)
-
-    const [file, setFile] = useState(null)
+    const [load, setLoad] = useState(false)
+    const canvas = useRef()
+    const image = useRef()
+    let ctx
+    useEffect(() => {
+        console.log(canvas.current)
+        ctx = canvas.current.getContext("2d")
+        
+    }, [canvas])
+    const [file, setFile] = useState('')
     function fileHandler(e) {
         setImageAsFile(e.target.files[0])
-        console.log(e.target.files[0])
+        const reader = new FileReader();
+        reader.onloadend = function(event) {
+            console.log(event.target.result)
+            setFile(reader.result)
+            ctx.drawImage(file, 0, 0)
+            ctx.front = "40px Courier"
+        }
+        reader.readAsDataURL(e.target.files[0])
+        setFile(reader.result)
+        setLoad(true)
+        // image.current.onload = () => {
+        //     ctx.drawImage(file, 0, 0)
+        //     ctx.front = "40px Courier"
+        //     ctx.fillText(text, 210, 75)
+        // }
     }
+    useEffect(() => {
+        console.log(file)
+    }, [load])
+
     const firebaseHandler = e => {
         e.preventDefault();
         const uploadTask = storage.ref(`/images/${imageAsFile.name}`).put(imageAsFile);
@@ -39,7 +65,10 @@ const Main = () => {
                 </label>
                 <input type='submit' value='submit' />
             </form>
-            <img src={imageAsUrl.imgUrl} alt="uploadedImg"/>
+            <div>
+                <canvas ref={canvas} width={600} height={400} />
+                {load ? <img ref={image} src={file} alt="uploadedImg"/>:null}
+            </div>
         </div>
     )
 }
