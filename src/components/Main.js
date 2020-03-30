@@ -19,46 +19,29 @@ const MainCanvas = styled.div`
         display: block
     }
 
-    .resize-container:hover img,
-    .resize-container:active img {
-        outline: 2px dashed rgba(222,60,80,.9);
-    }
-    .resize-handle-ne,
-    .resize-handle-ne,
-    .resize-handle-se,
-    .resize-handle-nw,
-    .resize-handle-sw {
-        position: absolute;
-        display: block;
-        width: 10px;
-        height: 10px;
-        background: rgba(222,60,80,.9);
-        z-index: 999;
-    }
-
     .canvas_container {
-        position: relative;
+        width: 100%;
     }
     .canvas {
-        width: 100%;
-        height: 100%;
+        min-width: 100px;
+        position: relative;
     }
     .cropper {
-        width: 1000px;
-        height: 700px;
+        background-color: rgba(0,0,0,0.7);
+        width: 100%;
+        height:100%;
         position: absolute;
         top: 0;
         left: 0;
-        background-color: rgba(0,0,0,.7);
     }
     .crop_square {
+        display: ${({isCrop}) => isCrop ? `block`:`none`};
         position: absolute;
         cursor: move;
-        left: 101px;
-        top: 121px;
-        width: 811px;
-        height: 406px;
-        background-color: gold;
+        left: ${props => props.cropper.left}px;
+        top: ${props => props.cropper.top}px;
+        width: ${props => props.cropper.width}px;
+        height: ${props => props.cropper.height}px;
     }
     .crop_square_margin {
         width: 10px;
@@ -89,6 +72,9 @@ const MainCanvas = styled.div`
         left: -5px;
         cursor: nw-resize;
     }
+    img {
+        width: 100%;
+    }
 `
 
 const Main = () => {
@@ -117,10 +103,11 @@ const Main = () => {
         await reader.readAsDataURL(e.target.files[0])
         // setFile(reader.result)
         setLoad(true)
+        await canvasHandler(e)
         await canvasHandler()
     }
 
-    function canvasHandler() {
+    function canvasHandler(e) {
         image.current.onload = () => {
             ctx.drawImage(image.current, 0, 0)
             ctx.front = "40px Courier"
@@ -192,12 +179,14 @@ const Main = () => {
                     {load ? <img ref={image} src={file} alt="uploadedImg" />:null}  
                 </div>
             </div>
+            <div>
             <form onSubmit={firebaseHandler}>
                 <label>
                     <input type='file' onChange={fileHandler}/>
                 </label>
                 <input type='submit' value='submit' />
             </form>
+            </div>
         </MainCanvas>
     )
 }
