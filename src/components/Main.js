@@ -8,26 +8,18 @@ const MainCanvas = styled.div`
     .hidden {
         display: none;
     }
-    .resize-container {
-    position: relative;
-    display: inline-block;
-    cursor: move;
-    margin: 0 auto;
-    }
-
-    .resize-container img {
-        display: block
-    }
 
     .canvas_container {
-        width: 100%;
+    position: relative;
+    display: inline-block;
+        overflow-x: hidden;
+        overflow-y: hidden;
+        max-width: 100%;
     }
     .canvas {
         min-width: 100px;
-        position: relative;
     }
     .cropper {
-        background-color: rgba(0,0,0,0.7);
         width: 100%;
         height:100%;
         position: absolute;
@@ -42,6 +34,9 @@ const MainCanvas = styled.div`
         top: ${props => props.cropper.top}px;
         width: ${props => props.cropper.width}px;
         height: ${props => props.cropper.height}px;
+        touch-action: manipulation;
+        box-shadow: 0 0 0 9999em rgba(0, 0, 0, 0.5);
+        box-sizing: border-box;
     }
     .crop_square_margin {
         width: 10px;
