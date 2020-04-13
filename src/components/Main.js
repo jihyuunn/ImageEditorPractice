@@ -10,14 +10,15 @@ const MainCanvas = styled.div`
     }
 
     .canvas_container {
-    position: relative;
-    display: inline-block;
+        position: relative;
+        display: inline-block;
         overflow-x: hidden;
         overflow-y: hidden;
         max-width: 100%;
     }
     .canvas {
         min-width: 100px;
+        min-height: 100px;
     }
     .cropper {
         width: 100%;
@@ -69,6 +70,7 @@ const MainCanvas = styled.div`
     }
     img {
         width: 100%;
+        height: 100%;
     }
 `
 
@@ -80,6 +82,18 @@ const Main = () => {
     const [load, setLoad] = useState(false)
     const canvas = useRef()
     const image = useRef()
+    const imageWrapper = useRef()
+    const [cropper, setCropper] = useState({
+        width: 600,
+        height: 300,
+        x: 0,
+        y: 0,
+        left: 0,
+        top: 0,
+        eventState: {
+            
+        }
+    })
     let ctx
 
     useEffect(() => {
@@ -98,8 +112,11 @@ const Main = () => {
         await reader.readAsDataURL(e.target.files[0])
         // setFile(reader.result)
         setLoad(true)
-        await canvasHandler(e)
-        await canvasHandler()
+        // await canvasHandler(e)
+        setIsCrop(true)
+        console.log(cropper)
+        setCanvasPos({width:cropper.width, height:cropper.height})
+        getCroppedImg();
     }
 
     function canvasHandler(e) {
@@ -108,6 +125,7 @@ const Main = () => {
             ctx.front = "40px Courier"
             // ctx.fillText(text, 210, 75)
         }
+        saveEventStart(e)
     }
 
     const firebaseHandler = e => {
@@ -130,57 +148,109 @@ const Main = () => {
         })
     }
 
-    const getCroppedImg = (image, crop) => {
-        const scaleX = image.naturalWidth / image.width;
-        const scaleY = image.naturalHeight / image.height;
-        canvas.width = crop.width;
-        canvas.height = crop.height;
-        const ctx = canvas.getContext("2d");
+    const [canvasPos, setCanvasPos] = useState({
+        width: 0,
+        height: 0
+    })
+    const getScale = () => {
+        let imageW = image.current.naturalWidth;
+        let wrapperW = imageWrapper.current.offsetWidth;
+        let imageH = image.current.naturalHeight;
+        let wrapperH = imageWrapper.current.offsetHeight;
+        let scaleX
+        let scaleY
+        if (imageW < wrapperH) {
+            scaleX = imageW/wrapperW;
+            scaleY = imageH/wrapperH;
+        } else {
+            scaleX = wrapperW/imageW;
+            scaleY = wrapperH/imageH;
+        }
+        return {scaleX,scaleY}
+    }
+    const getCroppedImg = () => {
+        // const ctx = canvas.getContext("2d");
+        image.current.onload = () => {
+        // const scaleX = image.current.width/imageWrapper.current.offsetWidth;
+        // const scaleY = image.current.height/imageWrapper.current.offsetHeight; 
+        const {scaleX, scaleY} = getScale();
+        console.log(scaleX, scaleY)
         ctx.drawImage(
-            image,
-            crop.x * scaleX,
-            crop.y * scaleY,
-            crop.width * scaleX,
-            crop.height * scaleY,
+            image.current,
+            cropper.left,
+            cropper.top,
+            cropper.width*scaleX,
+            cropper.height*scaleY,
             0,
             0,
-            crop.width,
-            crop.height
+            cropper.width,
+            cropper.height
          )
-    
-        const reader = new FileReader()
-        canvas.toBlob(blob => {
-            reader.readAsDataURL(blob)
-            reader.onloadend = () => {
-                this.dataURLtoFile(reader.result, 'cropped.jpg')
-            }
-        })
+        }
+        // const reader = new FileReader()
+        // canvas.current.toBlob(blob => {
+        //     reader.readAsDataURL(blob)
+        //     reader.onloadend = () => {
+        //         this.dataURLtoFile(reader.result, 'cropped.jpg')
+        //     }
+        // })
+    }
+    const [isCrop, setIsCrop] = useState(false)
+    const saveEventStart = (e) => {
+        console.log(e)
+        // setCropper({...cropper, eventState: {
+        //     container_width: image.current.width,
+        //     container_height: image.current.height,
+        //     container_left: image.offset().left,
+        //     container_top: image.offset().top,
+        //     mouse_x: window.scrollLeft,
+        //     mouse_y: window.scrollTop
+        // }})
+    }
+    const clamp = (num, min, max) => {
+        return Math.max(Math.max(num,min),max)
     }
 
-
+    const makeNewCrop = () => {
+        const width = imageWrapper.current.width
+        const height = imageWrapper.current.height
+        return {
+            unit: 'px',
+            // aspect: crop.aspect,
+            x: (cropper.x * width) / 100,
+            y: (cropper.y * height) / 100,
+            width: (cropper.width * width) / 100,
+            height: (cropper.height * height) / 100,
+          };
+    }
+    const dragCrop = () => {
+        const nextCrop = makeNewCrop();
+        const {width, height} = imageWrapper.current;
+        
+    }
     return (
-        <MainCanvas>
+        <MainCanvas cropper={cropper} isCrop={isCrop}>
             <div className="canvas_container">
-                <canvas ref={canvas} width={600} height={400} className="hidden" />
-                <div className="canvas">
-                    <div className="cropper">
+                <div className="canvas" ref={imageWrapper}>
+                    {load ? <img ref={image} src={file} alt="uploadedImg" />:null}  
+                </div>
+                    {/* <div ref={crop} className="cropper"> */}
                         <div className="crop_square">
                             <div className="crop_square_margin ne"></div>
                             <div className="crop_square_margin se"></div>
                             <div className="crop_square_margin sw"></div>
                             <div className="crop_square_margin nw"></div>
                         </div>
-                    </div>
-                    {load ? <img ref={image} src={file} alt="uploadedImg" />:null}  
-                </div>
+                    {/* </div> */}
             </div>
+            <canvas ref={canvas} width={canvasPos.width} height={canvasPos.height} />
             <div>
-            <form onSubmit={firebaseHandler}>
-                <label>
-                    <input type='file' onChange={fileHandler}/>
-                </label>
-                <input type='submit' value='submit' />
-            </form>
+                <form onSubmit={firebaseHandler}>
+                    <label>
+                        <input type='file' onChange={fileHandler}/>
+                    </label>
+                    <input type='submit' value='submit' />
+                </form>
             </div>
         </MainCanvas>
     )
