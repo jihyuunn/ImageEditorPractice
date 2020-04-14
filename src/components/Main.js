@@ -212,20 +212,21 @@ const Main = () => {
         return {
             unit: 'px',
             // aspect: crop.aspect,
-            x: (cropper.x * width) / 100,
-            y: (cropper.y * height) / 100,
+            x: (cropper.left * width) / 100,
+            y: (cropper.top * height) / 100,
             width: (cropper.width * width) / 100,
             height: (cropper.height * height) / 100,
           };
     }
     const dragCrop = (e) => {
-        const nextCrop = makeNewCrop();
-        const {width, height} = imageWrapper.current;
-        nextCrop.x = e.clientX-dragPos.startX;
-        nextCrop.y = e.clientY-dragPos.startY;
-        console.log(e.clientX, dragPos.startX)
-        setCropper({...cropper, left:nextCrop.x, top:nextCrop.y})
-        return 
+        if (isDragging) {
+            const nextCrop = makeNewCrop();
+            const {width, height} = imageWrapper.current;
+            nextCrop.x = e.clientX-dragPos.startX;
+            nextCrop.y = e.clientY-dragPos.startY;
+            console.log(e.clientX, dragPos.startX)
+            return setCropper(prev => ({...prev, left:prev.left+nextCrop.x, top:prev.top+nextCrop.y}))
+        }         
     }
     const [isDragging, setIsDragging] = useState(false)
     const [dragPos, setDragPos] = useState({
@@ -234,34 +235,29 @@ const Main = () => {
         endX: 0,
         endY: 0
     })
-    const square = document.getElementById('square');
-    if (square) {
-        square.addEventListener('mousedown', e => {
-            setDragPos({...dragPos, startX: e.clientX, startY: e.clientY})
-            setIsDragging(true)
-        })
-        square.addEventListener('mousemove',e => {
-            if (isDragging) {
-                dragCrop(e)
-            }
-        });
-        square.addEventListener('mouseup', e => {
-            console.log('up')
-            setIsDragging(false)
-        });
+   
+    const startDrag = (e) => {
+        setDragPos({...dragPos, startX: e.clientX, startY: e.clientY})
+        setIsDragging(true)
     }
-    // useEffect(() => {
-    //     console.log(isDragging)
-       
-    //     square.removeEventListener('mousemove', e => dragCrop(e))
-    // }, [isDragging])
-    // if (isDragging) {
-    //     square.addEventListener('mouseup', e => {
-    //         console.log('up')
-    //         setIsDragging(false)
-    //     })
-    //     square.removeEventListener('mousemove', e => dragCrop(e))
-    // }
+    const endDrag = () => {
+        console.log('up')
+        setIsDragging(false)
+        const {scaleX, scaleY} = getScale();
+        ctx = canvas.current.getContext("2d");
+        ctx.drawImage(
+            image.current,
+            cropper.left*scaleX,
+            cropper.top*scaleY,
+            cropper.width*scaleX,
+            cropper.height*scaleY,
+            0,
+            0,
+            cropper.width,
+            cropper.height
+         )
+    }
+    
     return (
         <MainCanvas cropper={cropper} isCrop={isCrop}>
             <div className="canvas_container">
@@ -269,7 +265,7 @@ const Main = () => {
                     {load ? <img ref={image} src={file} alt="uploadedImg" />:null}  
                 </div>
                     {/* <div ref={crop} className="cropper"> */}
-                        <div className="crop_square" id="square">
+                        <div className="crop_square" onMouseDown={e => startDrag(e)} onMouseMove={e => dragCrop(e)} onMouseUp={endDrag} >
                             <div className="crop_square_margin ne"></div>
                             <div className="crop_square_margin se"></div>
                             <div className="crop_square_margin sw"></div>
