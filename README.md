@@ -5,6 +5,8 @@
 
 ## ⚠️
 - width / offsetWidth / naturalWidth 차이점
+- react에서 addEvent 사용
+- react 합성이벤트 onMouseDown / onMouseMove / onMouseUp
 
 ## functions 🧰
 1. 이미지 미리보기 올리는 함수   
