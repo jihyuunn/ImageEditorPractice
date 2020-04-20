@@ -4,7 +4,11 @@ import styled from 'styled-components'
 const MainCanvas = styled.div`
     display: flex;
     flex-direction: column;
-    width: 100%;
+    width: 60%;
+    min-height: 100vh;
+    border-left: 1px solid #999999;
+    border-right: 1px solid #999999;
+    padding: 1rem;
     .hidden {
         display: none;
     }
@@ -74,7 +78,7 @@ const MainCanvas = styled.div`
     }
 `
 
-const Main = () => {
+const Main = ({size}) => {
     const storage = window.firebase.storage();
     const allInputs = {imgUrl: ''}
     const [imageAsFile, setImageAsFile] = useState('')
@@ -84,23 +88,15 @@ const Main = () => {
     const image = useRef()
     const imageWrapper = useRef()
     const [cropper, setCropper] = useState({
-        width: 600,
-        height: 300,
+        width: 200,
+        height: 100,
         x: 0,
         y: 0,
         left: 0,
         top: 0,
-        eventState: {
-            
-        }
+        wide: false
     })
     let ctx
-
-    useEffect(() => {
-        console.log(canvas.current)
-        ctx = canvas.current.getContext("2d")
-        
-    }, [canvas])
 
     const [file, setFile] = useState('')
     async function fileHandler(e) {
@@ -115,8 +111,23 @@ const Main = () => {
         // await canvasHandler(e)
         setIsCrop(true)
         console.log(cropper)
+        ctx = canvas.current.getContext("2d")
         setCanvasPos({width:cropper.width, height:cropper.height})
-        getCroppedImg();
+        image.current.onload = () => {
+            const {scaleX, scaleY} = getScale();
+            console.log(scaleX, scaleY)
+            ctx.drawImage(
+                image.current,
+                cropper.left,
+                cropper.top,
+                cropper.width*scaleX,
+                cropper.height*scaleY,
+                0,
+                0,
+                cropper.width,
+                cropper.height
+             )
+            }
     }
 
     function canvasHandler(e) {
@@ -125,7 +136,6 @@ const Main = () => {
             ctx.front = "40px Courier"
             // ctx.fillText(text, 210, 75)
         }
-        saveEventStart(e)
     }
 
     const firebaseHandler = e => {
@@ -164,11 +174,8 @@ const Main = () => {
         return {scaleX,scaleY}
     }
     const getCroppedImg = () => {
-        // const ctx = canvas.getContext("2d");
-        image.current.onload = () => {
-        // const scaleX = image.current.width/imageWrapper.current.offsetWidth;
-        // const scaleY = image.current.height/imageWrapper.current.offsetHeight; 
         const {scaleX, scaleY} = getScale();
+        ctx = canvas.current.getContext("2d");
         console.log(scaleX, scaleY)
         ctx.drawImage(
             image.current,
@@ -181,7 +188,6 @@ const Main = () => {
             cropper.width,
             cropper.height
          )
-        }
         // const reader = new FileReader()
         // canvas.current.toBlob(blob => {
         //     reader.readAsDataURL(blob)
@@ -191,17 +197,6 @@ const Main = () => {
         // })
     }
     const [isCrop, setIsCrop] = useState(false)
-    const saveEventStart = (e) => {
-        console.log(e)
-        // setCropper({...cropper, eventState: {
-        //     container_width: image.current.width,
-        //     container_height: image.current.height,
-        //     container_left: image.offset().left,
-        //     container_top: image.offset().top,
-        //     mouse_x: window.scrollLeft,
-        //     mouse_y: window.scrollTop
-        // }})
-    }
     const clamp = (num, min, max) => {
         return Math.max(Math.max(num,min),max)
     }
@@ -219,53 +214,70 @@ const Main = () => {
           };
     }
     const dragCrop = (e) => {
+        e.preventDefault();
         if (isDragging) {
             const nextCrop = makeNewCrop();
             const {width, height} = imageWrapper.current;
             nextCrop.x = e.clientX-dragPos.startX;
             nextCrop.y = e.clientY-dragPos.startY;
             console.log(e.clientX, dragPos.startX)
-            return setCropper(prev => ({...prev, left:prev.left+nextCrop.x, top:prev.top+nextCrop.y}))
+            return setCropper(prev => ({...prev, left:dragPos.prevX+nextCrop.x, top:dragPos.prevY+nextCrop.y}))
         }         
     }
     const [isDragging, setIsDragging] = useState(false)
     const [dragPos, setDragPos] = useState({
         startX:0,
         startY:0,
-        endX: 0,
-        endY: 0
+        prevX: 0,
+        prevY: 0
     })
    
     const startDrag = (e) => {
-        setDragPos({...dragPos, startX: e.clientX, startY: e.clientY})
+        setDragPos({startX: e.clientX, startY: e.clientY, prevX: cropper.left, prevY:cropper.top})
         setIsDragging(true)
     }
     const endDrag = () => {
         console.log('up')
+        console.log(cropper)
         setIsDragging(false)
-        const {scaleX, scaleY} = getScale();
-        ctx = canvas.current.getContext("2d");
-        ctx.drawImage(
-            image.current,
-            cropper.left*scaleX,
-            cropper.top*scaleY,
-            cropper.width*scaleX,
-            cropper.height*scaleY,
-            0,
-            0,
-            cropper.width,
-            cropper.height
-         )
+        // const {scaleX, scaleY} = getScale();
+        // ctx = canvas.current.getContext("2d");
+        // ctx.drawImage(
+        //     image.current,
+        //     cropper.left*scaleX,
+        //     cropper.top*scaleY,
+        //     cropper.width*scaleX,
+        //     cropper.height*scaleY,
+        //     0,
+        //     0,
+        //     cropper.width,
+        //     cropper.height
+        //  )
+        getCroppedImg();
     }
-    
+
+    useEffect(() => {
+        if (size.wide === true && cropper.wide === false) {
+            setCropper(oldArray => ({...oldArray, height: oldArray.width, width:oldArray.height, wide: true}));
+        } else {
+            setCropper(oldArray => ({...oldArray, height: oldArray.width, width:oldArray.height, wide: false}));
+        }
+    }, [size])
+    useEffect(() => {
+        if (image.current) {
+            console.log('crop')
+            getCroppedImg();
+        }
+    }, [cropper])
+
     return (
         <MainCanvas cropper={cropper} isCrop={isCrop}>
-            <div className="canvas_container">
+            <div className="canvas_container" onMouseUp={endDrag} >
                 <div className="canvas" ref={imageWrapper}>
                     {load ? <img ref={image} src={file} alt="uploadedImg" />:null}  
                 </div>
                     {/* <div ref={crop} className="cropper"> */}
-                        <div className="crop_square" onMouseDown={e => startDrag(e)} onMouseMove={e => dragCrop(e)} onMouseUp={endDrag} >
+                        <div className="crop_square" onMouseDown={e => startDrag(e)} onMouseMove={e => dragCrop(e)} >
                             <div className="crop_square_margin ne"></div>
                             <div className="crop_square_margin se"></div>
                             <div className="crop_square_margin sw"></div>
@@ -273,7 +285,7 @@ const Main = () => {
                         </div>
                     {/* </div> */}
             </div>
-            <canvas ref={canvas} width={canvasPos.width} height={canvasPos.height} />
+            <canvas ref={canvas} width={cropper.width} height={cropper.height} />
             <div>
                 <form onSubmit={firebaseHandler}>
                     <label>
