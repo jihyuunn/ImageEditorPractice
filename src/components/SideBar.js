@@ -12,14 +12,14 @@ const SideBar = ({ size, sizeHandler }) => {
     return (
         <SideBarContainer>
             <SideBarBox title='SIZES'>
-                <lable>
+                <label>
                     <input type='radio' value='tall' checked={size.tall} onChange={e => sizeHandler(e)} />
                     Tall
-                </lable>
-                <lable>
+                </label>
+                <label>
                     <input type='radio' value='wide' checked={size.wide} onChange={e => sizeHandler(e)} />
                     Wide
-                </lable>
+                </label>
             </SideBarBox>
             <SideBarBox title='TEXT'>
                 <li>Font</li>
